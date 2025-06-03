@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  db:
+    container_name: "todoDB"
+    image: postgres:15
+    volumes:
+      - "./database/postgres-data:/var/lib/postgresql/data:rw"
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: "todo"
+      POSTGRES_USER: "todo"
+      POSTGRES_PASSWORD: "todo"
+    restart: unless-stopped
