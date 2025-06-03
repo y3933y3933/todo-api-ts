@@ -2,6 +2,7 @@ import type { Request, Response } from "express"
 import { BadRequestError, UserNotAuthenticatedError } from "./errors.js"
 import {
   checkPasswordHash,
+  getBearerToken,
   hashPassword,
   makeJWT,
   makeRefreshToken,
@@ -10,7 +11,11 @@ import { createUser, getUserByEmail } from "../db/queries/users.js"
 import type { NewUser } from "../db/schema.js"
 import { respondWithJSON } from "./json.js"
 import { config } from "../config.js"
-import { saveRefreshToken } from "../db/queries/refresh.js"
+import {
+  revokeRefreshToken,
+  saveRefreshToken,
+  userForRefreshToken,
+} from "../db/queries/refresh.js"
 
 type UserResponse = Omit<NewUser, "hashedPassword">
 
@@ -90,6 +95,32 @@ export async function handlerLogin(req: Request, res: Response) {
   } satisfies LoginResponse)
 }
 
-export async function handlerRefresh(req: Request, res: Response) {}
+export async function handlerRefresh(req: Request, res: Response) {
+  let refreshToken = getBearerToken(req)
 
-export async function handlerRevoke(req: Request, res: Response) {}
+  const result = await userForRefreshToken(refreshToken)
+  if (!result) {
+    throw new UserNotAuthenticatedError("invalid refresh token")
+  }
+
+  const user = result.user
+  const accessToken = makeJWT(
+    user.id,
+    config.jwt.defaultDuration,
+    config.jwt.secret
+  )
+
+  type response = {
+    token: string
+  }
+
+  respondWithJSON(res, 200, {
+    token: accessToken,
+  } satisfies response)
+}
+
+export async function handlerRevoke(req: Request, res: Response) {
+  const refreshToken = getBearerToken(req)
+  await revokeRefreshToken(refreshToken)
+  res.status(204).send()
+}
