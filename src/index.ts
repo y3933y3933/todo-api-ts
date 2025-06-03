@@ -1,12 +1,17 @@
 import express from "express";
 import { errorMiddleWare, middlewareLogResponses } from "./api/middlewares.js";
 import { config } from "./config.js";
+import { handlerReadiness } from "./api/readiness.js";
 
 const app = express();
 
 app.use(express.json())
 app.use(middlewareLogResponses)
 
+
+app.get("/api/healthz", (req,res,next)=>{
+  Promise.resolve(handlerReadiness(req,res).catch(next))
+})
 
 app.use(errorMiddleWare)
 
