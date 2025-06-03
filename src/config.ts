@@ -14,6 +14,7 @@ function envOrThrow(key: string) {
 type Config = {
   api: APIConfig
   db: DBConfig
+  jwt: JWTConfig
 }
 
 type APIConfig = {
@@ -24,6 +25,13 @@ type APIConfig = {
 type DBConfig = {
   url: string
   migrationConfig: MigrationConfig
+}
+
+type JWTConfig = {
+  defaultDuration: number
+  secret: string
+  issuer: string
+  refreshDuration: number
 }
 
 const migrationConfig: MigrationConfig = {
@@ -38,5 +46,11 @@ export const config: Config = {
   db: {
     url: envOrThrow("DB_URL"),
     migrationConfig,
+  },
+  jwt: {
+    defaultDuration: 60 * 60,
+    refreshDuration: 60 * 60 * 24 * 60 * 1000,
+    secret: envOrThrow("SECRET"),
+    issuer: "todo",
   },
 }
