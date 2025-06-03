@@ -31,7 +31,7 @@ export async function updateTodo({
 }: {
   id: string
   title: string
-  description: string
+  description?: string
 }) {
   const [result] = await db
     .update(todos)

@@ -7,6 +7,7 @@ import {
   deleteTodo,
   getTodo,
   getTodos,
+  updateTodo,
 } from "../db/queries/todos.js"
 import { respondWithJSON } from "./json.js"
 
@@ -46,7 +47,39 @@ function validateTodo(title: string) {
   return title.trim()
 }
 
-export async function handlerTodoUpdate(req: Request, res: Response) {}
+export async function handlerTodoUpdate(req: Request, res: Response) {
+  const { id } = req.params
+  const token = getBearerToken(req)
+  const userId = validateJWT(token, config.jwt.secret)
+
+  const todo = await getTodo(id)
+  if (!todo) {
+    throw new NotFoundError(`Todo with todoID: ${id} not found`)
+  }
+
+  if (todo.userId !== userId) {
+    throw new UserForbiddenError("You can't delete this chirp")
+  }
+
+  type parameters = {
+    title: string
+    description?: string
+  }
+
+  const params: parameters = req.body
+  if (!params.title) {
+    throw new BadRequestError("Missing required fields")
+  }
+  const cleaned = validateTodo(params.title)
+
+  const updated = await updateTodo({
+    id,
+    title: cleaned,
+    description: params.description,
+  })
+
+  respondWithJSON(res, 200, updated)
+}
 
 export async function handlerTodoDelete(req: Request, res: Response) {
   const { id } = req.params
