@@ -1,4 +1,5 @@
 import bcrypt from "bcrypt"
+import crypto from "crypto"
 import jwt, { JwtPayload } from "jsonwebtoken"
 import { UserNotAuthenticatedError } from "./api/errors.js"
 import { config } from "./config.js"
@@ -53,4 +54,8 @@ export function validateJWT(tokenString: string, secret: string): string {
   }
 
   return decoded.sub
+}
+
+export function makeRefreshToken() {
+  return crypto.randomBytes(32).toString("hex")
 }

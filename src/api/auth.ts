@@ -1,9 +1,23 @@
 import type { Request, Response } from "express"
-import { BadRequestError } from "./errors.js"
-import { hashPassword } from "../auth.js"
-import { createUser } from "../db/queries/users.js"
+import { BadRequestError, UserNotAuthenticatedError } from "./errors.js"
+import {
+  checkPasswordHash,
+  hashPassword,
+  makeJWT,
+  makeRefreshToken,
+} from "../auth.js"
+import { createUser, getUserByEmail } from "../db/queries/users.js"
 import type { NewUser } from "../db/schema.js"
 import { respondWithJSON } from "./json.js"
+import { config } from "../config.js"
+import { saveRefreshToken } from "../db/queries/refresh.js"
+
+type UserResponse = Omit<NewUser, "hashedPassword">
+
+type LoginResponse = UserResponse & {
+  token: string
+  refreshToken: string
+}
 
 export async function handlerRegister(req: Request, res: Response) {
   type parameters = {
@@ -33,10 +47,48 @@ export async function handlerRegister(req: Request, res: Response) {
     email: user.email,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
-  } satisfies Omit<NewUser, "hashedPassword">)
+  } satisfies UserResponse)
 }
 
-export async function handlerLogin(req: Request, res: Response) {}
+export async function handlerLogin(req: Request, res: Response) {
+  type parameters = {
+    email: string
+    password: string
+  }
+
+  const params: parameters = req.body
+
+  const user = await getUserByEmail(params.email)
+  if (!user) {
+    throw new UserNotAuthenticatedError("invalid username or password")
+  }
+
+  const isMatch = await checkPasswordHash(params.password, user.hashedPassword)
+  if (!isMatch) {
+    throw new UserNotAuthenticatedError("invalid username or password")
+  }
+
+  const accessToken = makeJWT(
+    user.id,
+    config.jwt.defaultDuration,
+    config.jwt.secret
+  )
+
+  const refreshToken = makeRefreshToken()
+  const saved = await saveRefreshToken(user.id, refreshToken)
+  if (!saved) {
+    throw new UserNotAuthenticatedError("could not save refresh token")
+  }
+
+  respondWithJSON(res, 200, {
+    id: user.id,
+    email: user.email,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+    token: accessToken,
+    refreshToken: refreshToken,
+  } satisfies LoginResponse)
+}
 
 export async function handlerRefresh(req: Request, res: Response) {}
 
