@@ -15,6 +15,13 @@
       "when": 1748974021221,
       "tag": "0001_early_doctor_strange",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1748974515811,
+      "tag": "0002_condemned_madripoor",
+      "breakpoints": true
     }
   ]
 }

@@ -30,3 +30,16 @@ export const refreshTokens = pgTable("refresh_tokens", {
 })
 
 export type NewToken = typeof refreshTokens.$inferInsert
+
+export const todos = pgTable("todos", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: varchar("description", { length: 500 }),
+})
+
+export type NewTodo = typeof todos.$inferInsert
