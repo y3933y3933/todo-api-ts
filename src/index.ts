@@ -18,6 +18,7 @@ import {
   handlerTodosRetrieve,
   handlerTodoUpdate,
 } from "./api/todos.js"
+import { handlerReset } from "./api/reset.js"
 
 const migrationClient = postgres(config.db.url, { max: 1 })
 await migrate(drizzle(migrationClient), config.db.migrationConfig)
@@ -29,6 +30,11 @@ app.use(middlewareLogResponses)
 
 app.get("/api/healthz", (req, res, next) => {
   Promise.resolve(handlerReadiness(req, res).catch(next))
+})
+
+// admin
+app.post("/admin/reset", (req, res, next) => {
+  Promise.resolve(handlerReset(req, res)).catch(next)
 })
 
 // auth
