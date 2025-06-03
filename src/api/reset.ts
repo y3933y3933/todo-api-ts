@@ -11,5 +11,5 @@ export async function handlerReset(_: Request, res: Response) {
   }
 
   await reset()
-  respondWithJSON(res, 200, { message: "reset success" })
+  respondWithJSON(res, 200, { message: "Database reset successfully" })
 }

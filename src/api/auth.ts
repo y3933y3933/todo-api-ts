@@ -111,11 +111,11 @@ export async function handlerRefresh(req: Request, res: Response) {
   )
 
   type response = {
-    token: string
+    accessToken: string
   }
 
   respondWithJSON(res, 200, {
-    token: accessToken,
+    accessToken,
   } satisfies response)
 }
 
