@@ -1,8 +1,13 @@
 import type { Request, Response } from "express"
-import { BadRequestError, NotFoundError } from "./errors.js"
+import { BadRequestError, NotFoundError, UserForbiddenError } from "./errors.js"
 import { getBearerToken, validateJWT } from "../auth.js"
 import { config } from "../config.js"
-import { createTodo, getTodo, getTodos } from "../db/queries/todos.js"
+import {
+  createTodo,
+  deleteTodo,
+  getTodo,
+  getTodos,
+} from "../db/queries/todos.js"
 import { respondWithJSON } from "./json.js"
 
 export async function handlerTodoCreate(req: Request, res: Response) {
@@ -43,7 +48,27 @@ function validateTodo(title: string) {
 
 export async function handlerTodoUpdate(req: Request, res: Response) {}
 
-export async function handlerTodoDelete(req: Request, res: Response) {}
+export async function handlerTodoDelete(req: Request, res: Response) {
+  const { id } = req.params
+  const token = getBearerToken(req)
+  const userId = validateJWT(token, config.jwt.secret)
+
+  const todo = await getTodo(id)
+  if (!todo) {
+    throw new NotFoundError(`Todo with todoID: ${id} not found`)
+  }
+
+  if (todo.userId !== userId) {
+    throw new UserForbiddenError("You can't delete this chirp")
+  }
+
+  const deleted = await deleteTodo(id)
+  if (!deleted) {
+    throw new Error(`Failed to delete todo with todoID: ${id}`)
+  }
+
+  respondWithJSON(res, 204, { message: "delete todo success" })
+}
 
 export async function handlerTodosRetrieve(_: Request, res: Response) {
   const todos = await getTodos()
