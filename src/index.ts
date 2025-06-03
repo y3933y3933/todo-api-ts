@@ -1,5 +1,6 @@
 import express from "express";
 import { errorMiddleWare, middlewareLogResponses } from "./api/middlewares.js";
+import { config } from "./config.js";
 
 const app = express();
 
@@ -9,4 +10,6 @@ app.use(middlewareLogResponses)
 
 app.use(errorMiddleWare)
 
-app.listen(8080)
+app.listen(config.api.port, () => {
+    console.log(`Server is running at http://localhost:${config.api.port}`)
+  })
