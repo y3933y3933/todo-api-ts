@@ -40,6 +40,9 @@ export const todos = pgTable("todos", {
     .$onUpdate(() => new Date()),
   title: varchar("title", { length: 255 }).notNull(),
   description: varchar("description", { length: 500 }),
+  userId: uuid("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
 })
 
 export type NewTodo = typeof todos.$inferInsert
